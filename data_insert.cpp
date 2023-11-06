@@ -35,10 +35,10 @@ public:
 
     void display(std::string key, std::string value) {
         for (auto &row : data) {
-            if ((key == "date" && row.date == value) ||
-                (key == "order" && std::to_string(row.order) == value) ||
-                (key == "direction" && row.direction == value) ||
-                (key == "car_type" && row.car_type == value)) {
+            if ((key == "날짜" && row.date == value) ||
+                (key == "순번" && std::to_string(row.order) == value) ||
+                (key == "방향" && row.direction == value) ||
+                (key == "차종" && row.car_type == value)) {
                 std::cout << row.date << "," << row.time << "," << row.order << "," << row.cause << "," << row.speed << "," << row.direction << "," << row.car_type << " ";
             }
         }
@@ -70,7 +70,7 @@ int main() {
     CSVManager manager("data.csv");
 
     while (true) {
-        std::cout << "1. Add data\n2. Display data\n3. Save and exit\nChoose an option: ";
+        std::cout << "-----------\n1. 데이터 추가\n2. 데이터 확인\n3. 저장 및 종료\n-----------: ";
         int option;
         std::cin >> option;
         std::cin.ignore();
@@ -78,12 +78,12 @@ int main() {
         if (option == 1) {
             std::string date, time, cause, direction, car_type;
             int order, speed;
-            std::cout << "Enter date, time, order, cause, speed, direction, car type: ";
+            std::cout << "날짜, 시간, 순번, 원인, 속력, 방향, 차종을 입력하시오: ";
             std::cin >> date >> time >> order >> cause >> speed >> direction >> car_type;
             manager.addRow(CSVRow(date, time, order, cause, speed, direction, car_type));
         } else if (option == 2) {
             std::string key, value;
-            std::cout << "Enter key (date, order, direction, car_type) and value: ";
+            std::cout << "검색 기준(날짜, 순번, 방향, 차종 중)과 값을 입력하시오: ";
             std::cin >> key >> value;
             manager.display(key, value);
         } else if (option == 3) {
