@@ -6,12 +6,12 @@
 using namespace std;
 
 class Data {
-public:
+    public:
     string date, time, cause, speed, direction, carType;
     int number;
 };
 
-class DataManager {
+class DataManager : public Data {
 public:
     void addData(Data data) {
         // csv 파일에 데이터 추가
