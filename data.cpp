@@ -1,84 +1,140 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 #include <string>
+#include <memory>
 
-using namespace std;
+// using namespace std;
 
-class Data {
-    public:
-    string date, time, cause, speed, direction, carType;
-    int number;
-};
-
-class DataManager : public Data {
+// 열 추가 클래스
+class CSVRow {
 public:
-    void addData(Data data) {
-        // csv 파일에 데이터 추가
-        // data_insert.cpp에 임시작성
-    }
+    std::string row_value = 0;
+    virtual ~CSVRow() = default;
+    virtual std::string getRow() = 0;
+};
 
-    void deleteData(int number) {
-        // csv 파일에서 데이터 삭제
-        // data_delete.cpp에 임시작성
-    }
+class FieldNameRow : public CSVRow {
+public:
+    std::string date, time, cause, direction, car_type;
+    int order, speed;
+    FieldNameRow(std::string d, std::string t, int o, std::string c, int s, std::string dir, std::string ct)
+        : date(d), time(t), order(o), cause(c), speed(s), direction(dir), car_type(ct) {}
 
-    void viewData(string key, string value) {
-        // csv 파일에서 데이터 확인
-        // data_view.cpp에 임시작성
+    std::string getRow() override {
+        return date + "," + time + "," + std::to_string(order) + "," + cause + "," + std::to_string(speed) + "," + direction + "," + car_type;
     }
 };
 
-void displayMenu() {
-    cout << "1. 데이터 추가" << endl;
-    cout << "2. 데이터 삭제" << endl;
-    cout << "3. 데이터 확인" << endl;
-}
+class AdditionalData : public CSVRow {
+public:
+    int wheel_size;
+    AdditionalData(int ws) : wheel_size(ws) {}
+
+    std::string getRow() override {
+        return std::to_string(wheel_size);
+    }
+};
+
+class CSVIO {
+private:
+    std::string filename;
+    std::vector<std::unique_ptr<CSVRow>> data;
+
+public:
+    CSVIO(std::string filename) : filename(filename) {
+        load();
+    }
+
+    void addRow(std::unique_ptr<CSVRow> row) {
+        data.push_back(std::move(row));
+    }
+
+    void save() {
+        std::ofstream file(filename);
+        for (const auto &row : data) {
+            file << row->getRow() << std::endl;
+        }
+        file.close();
+    }
+
+    void display(std::string key, std::string value) {
+        for (const auto &row : data) {
+            if (key == "날짜") {
+                FieldNameRow *dataRow = dynamic_cast<FieldNameRow*>(row.get());
+                if (dataRow && dataRow->date == value) {
+                    std::cout << dataRow->getRow() << std::endl;
+                }
+            } else if (key == "순번") {
+                FieldNameRow *dataRow = dynamic_cast<FieldNameRow*>(row.get());
+                if (dataRow && std::to_string(dataRow->order) == value) {
+                    std::cout << dataRow->getRow() << std::endl;
+                }
+            } else if (key == "방향") {
+                FieldNameRow *dataRow = dynamic_cast<FieldNameRow*>(row.get());
+                if (dataRow && dataRow->direction == value) {
+                    std::cout << dataRow->getRow() << std::endl;
+                }
+            } else if (key == "차종") {
+                FieldNameRow *dataRow = dynamic_cast<FieldNameRow*>(row.get());
+                if (dataRow && dataRow->car_type == value) {
+                    std::cout << dataRow->getRow() << std::endl;
+                }
+            }
+        }
+    }
+
+    void load() {
+        std::ifstream file(filename);
+        std::string line;
+        while (std::getline(file, line)) {
+            std::istringstream ss(line);
+            std::string date, time, cause, direction, car_type;
+            int order, speed;
+            std::getline(ss, date, ',');
+            std::getline(ss, time, ',');
+            ss >> order;
+            ss.ignore();
+            std::getline(ss, cause, ',');
+            ss >> speed;
+            ss.ignore();
+            std::getline(ss, direction, ',');
+            std::getline(ss, car_type);
+            data.push_back(std::make_unique<FieldNameRow>(date, time, order, cause, speed, direction, car_type));
+        }
+        file.close();
+    }
+};
 
 int main() {
-    DataManager manager;
+    CSVIO manager("data.csv");
+
     while (true) {
-        displayMenu();
-        int menu;
-        cin >> menu;
+        std::cout << "-----------" << std::endl;
+        std::cout << "1. 데이터 추가" << std::endl;
+        std::cout << "2. 데이터 확인" << std::endl;
+        std::cout << "3. 저장 및 종료" << std::endl;
+        std::cout << "-----------: ";
 
-        if (menu == 1) {
-            Data data;
-            cout << "날짜를 입력하세요: ";
-            cin >> data.date;
-            cout << "시간을 입력하세요: ";
-            cin >> data.time;
-            cout << "순번을 입력하세요: ";
-            cin >> data.number;
-            cout << "원인을 입력하세요: ";
-            cin >> data.cause;
-            cout << "속도를 입력하세요: ";
-            cin >> data.speed;
-            cout << "방향을 입력하세요: ";
-            cin >> data.direction;
-            cout << "차종을 입력하세요: ";
-            cin >> data.carType;
+        int option;
+        std::cin >> option;
+        std::cin.ignore();
 
-            manager.addData(data);
-        }
-        else if (menu == 2) {
-            int number;
-            cout << "삭제할 데이터의 순번을 입력하세요: ";
-            cin >> number;
-
-            manager.deleteData(number);
-        }
-        else if (menu == 3) {
-            string key, value;
-            cout << "확인할 데이터의 키(날짜, 순번, 방향, 차종 중 하나)를 입력하세요: ";
-            cin >> key;
-            cout << "확인할 데이터의 값을 입력하세요: ";
-            cin >> value;
-
-            manager.viewData(key, value);
-        }
-        else {
-            cout << "잘못된 입력입니다. 다시 시도해주세요." << endl;
+        if (option == 1) {
+            std::string date, time, cause, direction, car_type;
+            int order, speed;
+            std::cout << "날짜, 시간, 순번, 원인, 속력, 방향, 차종을 입력하시오: ";
+            std::cin >> date >> time >> order >> cause >> speed >> direction >> car_type;
+            manager.addRow(std::make_unique<FieldNameRow>(date, time, order, cause, speed, direction, car_type));
+        } else if (option == 2) {
+            std::string key, value;
+            std::cout << "검색 기준(날짜, 순번, 방향, 차종 중)과 값을 입력하시오: ";
+            std::cin >> key >> value;
+            manager.display(key, value);
+        } else if (option == 3) {
+            manager.save();
+            break;
         }
     }
 
